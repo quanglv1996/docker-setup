@@ -1,0 +1,27 @@
+version: "3.8"
+
+services:
+  openproject:
+    image: openproject/community:13
+    container_name: openproject
+    restart: always
+
+    ports:
+      - "${OPENPROJECT_PORT:-8888}:80"
+
+    environment:
+      OPENPROJECT_SECRET_KEY_BASE: "${OPENPROJECT_SECRET_KEY_BASE}"
+      OPENPROJECT_HOST__NAME: "${OPENPROJECT_HOST_NAME:-localhost:8888}"
+      OPENPROJECT_HTTPS: "${OPENPROJECT_HTTPS:-false}"
+
+    volumes:
+      # Dữ liệu chính (database + attachments + config)
+      - ${PGDATA_PATH:-./data/pgdata}:/var/openproject/pgdata
+      - ${ASSETS_PATH:-./data/assets}:/var/openproject/assets
+
+    networks:
+      - openproject-net
+
+networks:
+  openproject-net:
+    driver: bridge
