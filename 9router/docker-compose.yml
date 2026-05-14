@@ -1,0 +1,12 @@
+services:
+  9router:
+    image: decolua/9router:latest
+    container_name: 9router
+    restart: unless-stopped
+    ports:
+      - "${PORT_HOST:-20128}:20128"
+    environment:
+      - DATA_DIR=/app/data
+      - TZ=${TZ:-Asia/Ho_Chi_Minh}
+    volumes:
+      - ${DATA_PATH:-./data}:/app/data
