@@ -99,6 +99,32 @@ docker compose up -d
 
 > Nếu di chuyển dữ liệu từ đường dẫn cũ, hãy copy toàn bộ nội dung thư mục trước khi khởi động lại.
 
+## ⚠️ Fix lỗi Permission (bind mount)
+
+Khi dùng bind mount, container Label Studio chạy với user `1001` (group `0`). Nếu thư mục data được tạo bởi root hoặc user khác, container sẽ bị lỗi **Permission denied** khi ghi dữ liệu.
+
+**Triệu chứng:**
+```
+PermissionError: [Errno 13] Permission denied: '/label-studio/data/...'
+```
+
+**Cách fix — chạy lệnh sau trên host (Linux/macOS/WSL):**
+```bash
+sudo chown -R 1001:0 /path/to/data
+```
+
+Ví dụ nếu data nằm tại `E:/_DOCKER/label-studio/data` (WSL):
+```bash
+sudo chown -R 1001:0 /mnt/e/_DOCKER/label-studio/data
+```
+
+Hoặc nếu đang dùng Linux native:
+```bash
+sudo chown -R 1001:0 /path/to/labelstudio/data
+```
+
+> Lệnh này chỉ cần chạy **một lần** sau khi tạo thư mục data hoặc khi thay đổi `LABELSTUDIO_DATA_PATH`. MinIO không yêu cầu fix permission vì image minio chạy với user có quyền phù hợp.
+
 ## Lệnh thường dùng
 
 | Lệnh | Mục đích |
