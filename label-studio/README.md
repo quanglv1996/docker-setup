@@ -1,6 +1,6 @@
-# Label Studio + MinIO - Docker Setup
+# Label Studio - Docker Setup
 
-Triển khai [Label Studio](https://labelstud.io/) kèm [MinIO](https://min.io/) làm S3-compatible storage, chạy sau Cloudflare Tunnel (hoặc reverse proxy bất kỳ).
+Triển khai [Label Studio](https://labelstud.io/) chạy sau Cloudflare Tunnel (hoặc reverse proxy bất kỳ).
 
 ## Kiến trúc
 
@@ -11,8 +11,7 @@ Internet
 Cloudflare Tunnel
    │
    ▼
-Label Studio :8080  ──►  MinIO :9000 (S3 API)
-                          MinIO :9001 (Console UI)
+Label Studio :8080
 ```
 
 ## Yêu cầu
@@ -25,7 +24,6 @@ Label Studio :8080  ──►  MinIO :9000 (S3 API)
 ```
 label-studio/
 ├── data/
-│   ├── minio/          ← dữ liệu MinIO (tự tạo khi chạy)
 │   └── labelstudio/    ← dữ liệu Label Studio (tự tạo khi chạy)
 ├── docker-compose.yml
 ├── .env
@@ -36,43 +34,31 @@ label-studio/
 
 ### 1. Cấu hình `.env`
 
-Sao chép và chỉnh sửa file `.env`:
+Tạo file `.env` và điền các giá trị:
 
-| Biến | Mô tả | Mặc định |
-|------|--------|----------|
-| `MINIO_ROOT_USER` | Username đăng nhập MinIO | `minioadmin` |
-| `MINIO_ROOT_PASSWORD` | Password MinIO (≥ 8 ký tự) | `minioadmin123` |
-| `LABEL_STUDIO_DOMAIN` | Domain public của Label Studio | `labelstudio.example.com` |
-| `AWS_ACCESS_KEY_ID` | Access key dùng để Label Studio kết nối MinIO | `minioadmin` |
-| `AWS_SECRET_ACCESS_KEY` | Secret key tương ứng | `minioadmin123` |
-| `AWS_S3_BUCKET_NAME` | Tên bucket lưu trữ dữ liệu | `labelstudio` |
-| `MINIO_DATA_PATH` | Đường dẫn lưu dữ liệu MinIO | `./data/minio` |
-| `LABELSTUDIO_DATA_PATH` | Đường dẫn lưu dữ liệu Label Studio | `./data/labelstudio` |
-
-> **Lưu ý bảo mật:** Đổi `MINIO_ROOT_PASSWORD` và `AWS_SECRET_ACCESS_KEY` trước khi chạy production. Không commit `.env` lên Git.
-
-### 2. Tạo bucket trên MinIO
-
-Bucket phải tồn tại trước khi Label Studio khởi động. Có hai cách:
-
-**Cách A — MinIO Console (sau khi stack đã chạy):**
-1. Truy cập `http://localhost:9001`
-2. Đăng nhập bằng `MINIO_ROOT_USER` / `MINIO_ROOT_PASSWORD`
-3. Tạo bucket với tên khớp `AWS_S3_BUCKET_NAME`
-
-**Cách B — MinIO CLI:**
-```bash
-docker compose exec minio mc alias set local http://localhost:9000 $MINIO_ROOT_USER $MINIO_ROOT_PASSWORD
-docker compose exec minio mc mb local/$AWS_S3_BUCKET_NAME
+```env
+LABEL_STUDIO_USERNAME=your@email.com
+LABEL_STUDIO_PASSWORD=your_password
+LABEL_STUDIO_DOMAIN=label.example.com
+LABELSTUDIO_DATA_PATH=./data/labelstudio
 ```
 
-### 3. Khởi động
+| Biến | Mô tả |
+|------|--------|
+| `LABEL_STUDIO_USERNAME` | Email đăng nhập Label Studio |
+| `LABEL_STUDIO_PASSWORD` | Mật khẩu đăng nhập |
+| `LABEL_STUDIO_DOMAIN` | Domain public của Label Studio |
+| `LABELSTUDIO_DATA_PATH` | Đường dẫn lưu dữ liệu (mặc định `./data/labelstudio`) |
+
+> **Lưu ý bảo mật:** Không commit file `.env` lên Git.
+
+### 2. Khởi động
 
 ```bash
 docker compose up -d
 ```
 
-### 4. Kiểm tra
+### 3. Kiểm tra
 
 ```bash
 docker compose ps
@@ -83,10 +69,9 @@ Label Studio sẽ khả dụng tại `https://<LABEL_STUDIO_DOMAIN>` (qua tunnel
 
 ## Thay đổi vị trí lưu dữ liệu
 
-Chỉnh hai biến trong `.env`:
+Chỉnh biến trong `.env`:
 
 ```env
-MINIO_DATA_PATH=/mnt/storage/minio
 LABELSTUDIO_DATA_PATH=/mnt/storage/labelstudio
 ```
 
@@ -101,44 +86,35 @@ docker compose up -d
 
 ## ⚠️ Fix lỗi Permission (bind mount)
 
-Khi dùng bind mount, container Label Studio chạy với user `1001` (group `0`). Nếu thư mục data được tạo bởi root hoặc user khác, container sẽ bị lỗi **Permission denied** khi ghi dữ liệu.
+Container Label Studio chạy với user `1001` (group `0`). Nếu thư mục data được tạo bởi root hoặc user khác, container sẽ bị lỗi **Permission denied** khi ghi dữ liệu.
 
 **Triệu chứng:**
 ```
 PermissionError: [Errno 13] Permission denied: '/label-studio/data/...'
 ```
 
-**Cách fix — chạy lệnh sau trên host (Linux/macOS/WSL):**
-```bash
-sudo chown -R 1001:0 /path/to/data
-```
-
-Ví dụ nếu data nằm tại `E:/_DOCKER/label-studio/data` (WSL):
-```bash
-sudo chown -R 1001:0 /mnt/e/_DOCKER/label-studio/data
-```
-
-Hoặc nếu đang dùng Linux native:
+**Cách fix:**
 ```bash
 sudo chown -R 1001:0 /path/to/labelstudio/data
 ```
+```bash
+sudo chmod -R 775 /path/to/labelstudio/data
+```
 
-> Lệnh này chỉ cần chạy **một lần** sau khi tạo thư mục data hoặc khi thay đổi `LABELSTUDIO_DATA_PATH`. MinIO không yêu cầu fix permission vì image minio chạy với user có quyền phù hợp.
+> Lệnh này chỉ cần chạy **một lần** sau khi tạo thư mục data hoặc khi thay đổi `LABELSTUDIO_DATA_PATH`.
 
 ## Lệnh thường dùng
 
 | Lệnh | Mục đích |
 |------|---------|
-| `docker compose up -d` | Khởi động tất cả services |
-| `docker compose down` | Dừng và xóa containers |
+| `docker compose up -d` | Khởi động service |
+| `docker compose down` | Dừng và xóa container |
 | `docker compose logs -f` | Xem logs realtime |
-| `docker compose pull` | Cập nhật images mới nhất |
-| `docker compose restart labelstudio` | Khởi động lại chỉ Label Studio |
+| `docker compose pull` | Cập nhật image mới nhất |
+| `docker compose restart labelstudio` | Khởi động lại Label Studio |
 
 ## Cổng dịch vụ
 
 | Service | Cổng |
 |---------|------|
 | Label Studio | `8080` |
-| MinIO S3 API | `9000` |
-| MinIO Console | `9001` |
