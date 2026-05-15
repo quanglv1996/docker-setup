@@ -1,31 +1,16 @@
 services:
-  minio:
-    image: minio/minio:latest
-    container_name: labelstudio_minio
-    restart: unless-stopped
-    command: server /data --console-address ":9001"
-    environment:
-      - MINIO_ROOT_USER=${MINIO_ROOT_USER}
-      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
-    volumes:
-      - ${MINIO_DATA_PATH:-./data/minio}:/data
-    ports:
-      - "9000:9000"
-      - "9001:9001"
-    networks:
-      - labelstudio_net
-
   labelstudio:
     image: heartexlabs/label-studio:1.23.0
     container_name: labelstudio
     restart: unless-stopped
-    depends_on:
-      - minio
     ports:
       - "8080:8080"
     environment:
       - LABEL_STUDIO_USERNAME=${LABEL_STUDIO_USERNAME}
       - LABEL_STUDIO_PASSWORD=${LABEL_STUDIO_PASSWORD}
+
+      - DATA_UPLOAD_MAX_NUMBER_FILES=10000
+      - DATA_UPLOAD_MAX_MEMORY_SIZE=10737418240
 
       - LABEL_STUDIO_HOST=https://${LABEL_STUDIO_DOMAIN}
       - LABEL_STUDIO_PORT=8080
@@ -38,22 +23,9 @@ services:
       - USE_X_FORWARDED_PORT=1
       - SECURE_PROXY_SSL_HEADER=HTTP_X_FORWARDED_PROTO,https
 
-      - CSRF_COOKIE_SECURE=0
-      - SESSION_COOKIE_SECURE=0
-      - SESSION_COOKIE_SAMESITE=None
-
-      - STORAGE_TYPE=s3
-      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
-      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
-      - AWS_S3_ENDPOINT=http://minio:9000
-      - AWS_S3_REGION=us-east-1
-      - AWS_S3_USE_SSL=0
-      - AWS_S3_BUCKET_NAME=${AWS_S3_BUCKET_NAME}
+      - CSRF_COOKIE_SECURE=1
+      - SESSION_COOKIE_SECURE=1
+      - SESSION_COOKIE_SAMESITE=Lax
 
     volumes:
       - ${LABELSTUDIO_DATA_PATH:-./data/labelstudio}:/label-studio/data
-    networks:
-      - labelstudio_net
-
-networks:
-  labelstudio_net:
