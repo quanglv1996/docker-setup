@@ -6,12 +6,16 @@ Tập hợp các cấu hình Docker Compose sẵn sàng triển khai cho self-ho
 
 | Thư mục | Dịch vụ | Mô tả |
 |---------|---------|-------|
+| [`qdrant/`](qdrant/) | Qdrant | Vector database |
+| [`portainer/`](portainer/) | Portainer CE | Giao diện web quản lý Docker |
 | [`cloudflare-tunnel/`](cloudflare-tunnel/) | Cloudflare Tunnel | Expose dịch vụ nội bộ ra internet, không cần mở port |
 | [`cloudflare-ddns-wireguard/`](cloudflare-ddns-wireguard/) | DDNS + WireGuard | Tự cập nhật DNS động và VPN server |
 | [`n8n/`](n8n/) | n8n + PostgreSQL | Workflow automation |
 | [`minio/`](minio/) | MinIO | Object storage tương thích S3 |
 | [`label-studio/`](label-studio/) | Label Studio | Công cụ gán nhãn dữ liệu AI/ML |
 | [`open-project/`](open-project/) | OpenProject | Quản lý dự án mã nguồn mở |
+| [`dify/`](dify/) | Dify + PostgreSQL + Redis + Weaviate | Nền tảng phát triển ứng dụng LLM |
+| [`nextcloud/`](nextcloud/) | Nextcloud + MariaDB + Redis | Self-hosted cloud storage |
 | [`9router/`](9router/) | 9router | Reverse proxy / router |
 
 ## Cấu trúc chung
