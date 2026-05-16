@@ -1,0 +1,66 @@
+version: "3.9"
+
+services:
+  mariadb:
+    image: mariadb:11
+    container_name: nextcloud_db
+    restart: unless-stopped
+    command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_DATABASE:-nextcloud}
+      - MYSQL_USER=${MYSQL_USER:-nextcloud}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+    volumes:
+      - ${DB_DATA_PATH:-./data/db}:/var/lib/mysql
+    networks:
+      - nextcloud_net
+
+  redis:
+    image: redis:7-alpine
+    container_name: nextcloud_redis
+    restart: unless-stopped
+    networks:
+      - nextcloud_net
+
+  nextcloud:
+    image: nextcloud:latest
+    container_name: nextcloud
+    restart: unless-stopped
+    depends_on:
+      - mariadb
+      - redis
+    environment:
+      - TZ=Asia/Ho_Chi_Minh
+
+      # Database
+      - MYSQL_HOST=mariadb
+      - MYSQL_DATABASE=${MYSQL_DATABASE:-nextcloud}
+      - MYSQL_USER=${MYSQL_USER:-nextcloud}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+
+      # Redis
+      - REDIS_HOST=redis
+
+      # Admin account (chỉ dùng lần đầu khởi tạo)
+      - NEXTCLOUD_ADMIN_USER=${NEXTCLOUD_ADMIN_USER:-admin}
+      - NEXTCLOUD_ADMIN_PASSWORD=${NEXTCLOUD_ADMIN_PASSWORD}
+
+      # Trusted domains (thêm domain cách nhau bằng dấu cách)
+      - NEXTCLOUD_TRUSTED_DOMAINS=${NEXTCLOUD_TRUSTED_DOMAINS:-localhost}
+
+      # Reverse proxy
+      - TRUSTED_PROXIES=${TRUSTED_PROXIES:-}
+      - OVERWRITEPROTOCOL=${OVERWRITE_PROTOCOL:-https}
+      - OVERWRITEHOST=${OVERWRITE_HOST:-}
+      - OVERWRITECLIURL=${OVERWRITE_CLI_URL:-}
+
+    volumes:
+      - ${NEXTCLOUD_DATA_PATH:-./data/nextcloud}:/var/www/html
+    ports:
+      - "${NEXTCLOUD_PORT:-8080}:80"
+    networks:
+      - nextcloud_net
+
+networks:
+  nextcloud_net:
