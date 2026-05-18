@@ -1,21 +1,17 @@
-version: "3.8"
-
 services:
   openproject:
-    image: openproject/community:13
+    image: openproject/openproject:17
     container_name: openproject
-    restart: always
+    restart: unless-stopped
 
     ports:
       - "${OPENPROJECT_PORT:-8888}:80"
 
     environment:
-      - OPENPROJECT_SECRET_KEY_BASE=${OPENPROJECT_SECRET_KEY_BASE}
+      - SECRET_KEY_BASE=${SECRET_KEY_BASE}
       - OPENPROJECT_HOST__NAME=${OPENPROJECT_HOST_NAME:-localhost:8888}
       - OPENPROJECT_HTTPS=${OPENPROJECT_HTTPS:-false}
-
-      # Tắt seed demo data để tránh lỗi default_role_project_admin
-      - OPENPROJECT_SEED_DEMO_DATA=0
+      - OPENPROJECT_SEED_DEMO_DATA=false
 
     volumes:
       - ${PGDATA_PATH:-./data/pgdata}:/var/openproject/pgdata
