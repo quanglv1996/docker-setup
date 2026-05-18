@@ -16,6 +16,7 @@ services:
     volumes:
       - ${PGDATA_PATH:-./data/pgdata}:/var/openproject/pgdata
       - ${ASSETS_PATH:-./data/assets}:/var/openproject/assets
+      - ./enterprise_token.rb:/app/app/models/enterprise_token.rb
 
     networks:
       - openproject-net
