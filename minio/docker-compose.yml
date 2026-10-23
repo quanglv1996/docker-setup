@@ -2,7 +2,8 @@ version: "3.9"
 
 services:
   minio:
-    image: minio/minio:latest
+    # minio/minio trên Docker Hub đã bị gỡ, dùng bản build cộng đồng (Pigsty)
+    image: pgsty/minio:latest
     container_name: minio
     restart: unless-stopped
     command: server /data --console-address ":9001"
