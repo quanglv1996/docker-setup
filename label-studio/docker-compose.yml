@@ -4,7 +4,7 @@ services:
     container_name: labelstudio
     restart: unless-stopped
     ports:
-      - "8080:8080"
+      - "${LABELSTUDIO_PORT:-8080}:8080"
     environment:
       - LABEL_STUDIO_USERNAME=${LABEL_STUDIO_USERNAME}
       - LABEL_STUDIO_PASSWORD=${LABEL_STUDIO_PASSWORD}
@@ -12,20 +12,25 @@ services:
       - DATA_UPLOAD_MAX_NUMBER_FILES=10000
       - DATA_UPLOAD_MAX_MEMORY_SIZE=10737418240
 
-      - LABEL_STUDIO_HOST=https://${LABEL_STUDIO_DOMAIN}
+      # URL gốc để sinh link tuyệt đối. Để trống -> link tương đối, dùng được cho cả localhost / IP / domain
+      - LABEL_STUDIO_HOST=${LABEL_STUDIO_HOST:-}
       - LABEL_STUDIO_PORT=8080
 
-      - DJANGO_ALLOWED_HOSTS=${LABEL_STUDIO_DOMAIN},localhost,127.0.0.1,192.168.66.44
-      - DJANGO_CSRF_TRUSTED_ORIGINS=https://${LABEL_STUDIO_DOMAIN}, http://192.168.66.44:8080
-      - CSRF_TRUSTED_ORIGINS=https://${LABEL_STUDIO_DOMAIN}
+      # Truy cập được bằng localhost, IP LAN và domain Cloudflare (không có dấu cách giữa các giá trị)
+      - ALLOWED_HOSTS=localhost,127.0.0.1,${HOST_IP:-127.0.0.1},${LABEL_STUDIO_DOMAIN}
+      - CSRF_TRUSTED_ORIGINS=https://${LABEL_STUDIO_DOMAIN},http://localhost:${LABELSTUDIO_PORT:-8080},http://127.0.0.1:${LABELSTUDIO_PORT:-8080},http://${HOST_IP:-127.0.0.1}:${LABELSTUDIO_PORT:-8080}
 
-      - USE_X_FORWARDED_HOST=1
-      - USE_X_FORWARDED_PORT=1
-      - SECURE_PROXY_SSL_HEADER=HTTP_X_FORWARDED_PROTO,https
-
-      - CSRF_COOKIE_SECURE=1
-      - SESSION_COOKIE_SECURE=1
+      # Cookie Secure=1 sẽ chặn đăng nhập qua http://localhost / http://IP
+      - CSRF_COOKIE_SECURE=0
+      - SESSION_COOKIE_SECURE=0
       - SESSION_COOKIE_SAMESITE=Lax
 
     volumes:
       - ${LABELSTUDIO_DATA_PATH:-./data/labelstudio}:/label-studio/data
+    networks:
+      - default
+      - proxy
+
+networks:
+  proxy:
+    name: proxy_net

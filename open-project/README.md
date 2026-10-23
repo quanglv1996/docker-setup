@@ -25,14 +25,15 @@ open-project/
 
 | Biến | Mô tả | Mặc định |
 |------|--------|----------|
-| `OPENPROJECT_SECRET_KEY_BASE` | Chuỗi bí mật (bắt buộc đổi) | *(trống)* |
-| `OPENPROJECT_HOST_NAME` | Domain hoặc `IP:Port` truy cập | `localhost:8888` |
-| `OPENPROJECT_HTTPS` | Bật HTTPS (khi chạy sau proxy) | `false` |
+| `SECRET_KEY_BASE` | Chuỗi bí mật (bắt buộc đổi) | *(trống)* |
+| `OPENPROJECT_HOST_NAME` | Domain chính (dùng cho link trong email) | `localhost:8888` |
+| `HOST_IP` | IP LAN được phép truy cập (`localhost`, `127.0.0.1` luôn được phép) | `127.0.0.1` |
+| `OPENPROJECT_HTTPS` | `true` sẽ ép redirect sang HTTPS và cookie Secure → không vào được bằng HTTP/IP | `false` |
 | `OPENPROJECT_PORT` | Cổng host ánh xạ vào container | `8888` |
 | `PGDATA_PATH` | Đường dẫn lưu database | `./data/pgdata` |
 | `ASSETS_PATH` | Đường dẫn lưu file đính kèm | `./data/assets` |
 
-**Sinh `OPENPROJECT_SECRET_KEY_BASE`:**
+**Sinh `SECRET_KEY_BASE`:**
 ```bash
 openssl rand -hex 64
 ```
@@ -54,7 +55,7 @@ docker compose ps
 docker compose logs -f openproject
 ```
 
-Truy cập tại `http://localhost:8888` (hoặc theo `OPENPROJECT_HOST_NAME`).  
+Truy cập tại `http://localhost:8888`, `http://<HOST_IP>:8888` hoặc domain `OPENPROJECT_HOST_NAME`.  
 Tài khoản mặc định: **admin / admin** (đổi ngay sau lần đăng nhập đầu tiên).
 
 ## Chạy sau Cloudflare Tunnel / Reverse Proxy
@@ -63,8 +64,13 @@ Chỉnh `.env`:
 
 ```env
 OPENPROJECT_HOST_NAME=openproject.example.com
-OPENPROJECT_HTTPS=true
+HOST_IP=192.168.1.100
+OPENPROJECT_HTTPS=false
 ```
+
+Cloudflare Tunnel trỏ `openproject.example.com` → `http://openproject:80`. Giữ `OPENPROJECT_HTTPS=false`
+để vẫn truy cập được bằng localhost / IP; HTTPS cho domain do Cloudflare đảm nhận. Host không nằm trong
+`OPENPROJECT_HOST_NAME` / `HOST_IP` / localhost sẽ bị trả lỗi `Invalid host_name configuration`.
 
 Sau đó khởi động lại:
 

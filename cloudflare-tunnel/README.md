@@ -59,10 +59,16 @@ docker compose down
 
 Sau khi tunnel đang chạy, vào Cloudflare Zero Trust Dashboard → **Networks** → **Tunnels** → chọn tunnel → **Configure** → **Public Hostname** để thêm các route:
 
+`cloudflared` nằm trong mạng `proxy_net` cùng các ứng dụng, nên Service dùng tên container
+(không dùng `localhost` — đó là chính container cloudflared):
+
 | Subdomain       | Service                     |
 |-----------------|-----------------------------|
-| `app.example.com` | `http://localhost:3000`   |
-| `api.example.com` | `http://localhost:8080`   |
+| `label.example.com` | `http://labelstudio:8080` |
+| `nextcloud.example.com` | `http://nextcloud:80` |
+| `host.example.com` | `http://host.docker.internal:3000` (cổng trên máy host) |
+
+Danh sách đầy đủ xem [README gốc](../README.md#truy-cập).
 
 ## Ghi chú
 

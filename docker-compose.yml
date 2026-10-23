@@ -1,0 +1,20 @@
+# Chạy toàn bộ ứng dụng từ thư mục gốc, không cần cd vào từng thư mục:
+#   docker compose up -d        # khởi động tất cả
+#   docker compose ps           # xem trạng thái
+#   docker compose logs -f <service>
+#   docker compose down         # dừng tất cả (dữ liệu bind mount vẫn giữ nguyên)
+#
+# Mỗi stack vẫn đọc file .env trong thư mục riêng của nó.
+# KHÔNG tạo file .env ở thư mục gốc: biến trong đó sẽ ghi đè .env của mọi stack.
+name: docker-setup
+
+include:
+  #- cloudflare-tunnel/docker-compose.yml
+  - portainer/docker-compose.yml
+  - minio/docker-compose.yml
+  - label-studio/docker-compose.yml
+  - nextcloud/docker-compose.yml
+  - open-project/docker-compose.yml
+  #- vaultwarden/docker-compose.yml
+  # Bỏ comment khi đã điền CF_API_TOKEN / WG_SERVERURL thật trong cloudflare-ddns-wireguard/.env
+  # - cloudflare-ddns-wireguard/docker-compose.yml

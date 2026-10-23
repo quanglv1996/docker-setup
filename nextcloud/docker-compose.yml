@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   mariadb:
     image: mariadb:11
@@ -13,6 +11,12 @@ services:
       - MYSQL_PASSWORD=${MYSQL_PASSWORD}
     volumes:
       - ${DB_DATA_PATH:-./data/db}:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
     networks:
       - nextcloud_net
 
@@ -28,8 +32,11 @@ services:
     container_name: nextcloud
     restart: unless-stopped
     depends_on:
-      - mariadb
-      - redis
+      # Chờ DB sẵn sàng, hook before-starting cần kết nối DB để chạy occ
+      mariadb:
+        condition: service_healthy
+      redis:
+        condition: service_started
     environment:
       - TZ=Asia/Ho_Chi_Minh
 
@@ -46,21 +53,27 @@ services:
       - NEXTCLOUD_ADMIN_USER=${NEXTCLOUD_ADMIN_USER:-admin}
       - NEXTCLOUD_ADMIN_PASSWORD=${NEXTCLOUD_ADMIN_PASSWORD}
 
-      # Trusted domains (thêm domain cách nhau bằng dấu cách)
+      # Trusted domains (cách nhau bằng dấu cách) - đồng bộ mỗi lần khởi động bởi hooks/before-starting
       - NEXTCLOUD_TRUSTED_DOMAINS=${NEXTCLOUD_TRUSTED_DOMAINS:-localhost}
 
-      # Reverse proxy
-      - TRUSTED_PROXIES=${TRUSTED_PROXIES:-}
-      - OVERWRITEPROTOCOL=${OVERWRITE_PROTOCOL:-https}
+      # Reverse proxy: chỉ tin header X-Forwarded-* từ dải IP Docker (cloudflared).
+      # Để trống OVERWRITE_HOST / OVERWRITE_PROTOCOL để không ép mọi truy cập về domain.
+      - TRUSTED_PROXIES=${TRUSTED_PROXIES:-172.16.0.0/12}
+      - OVERWRITEPROTOCOL=${OVERWRITE_PROTOCOL:-}
       - OVERWRITEHOST=${OVERWRITE_HOST:-}
       - OVERWRITECLIURL=${OVERWRITE_CLI_URL:-}
 
     volumes:
       - ${NEXTCLOUD_DATA_PATH:-./data/nextcloud}:/var/www/html
+      - ./hooks/before-starting:/docker-entrypoint-hooks.d/before-starting:ro
     ports:
-      - "${NEXTCLOUD_PORT:-8080}:80"
+      # 9090 để không trùng cổng 8080 của Label Studio
+      - "${NEXTCLOUD_PORT:-9090}:80"
     networks:
       - nextcloud_net
+      - proxy
 
 networks:
   nextcloud_net:
+  proxy:
+    name: proxy_net

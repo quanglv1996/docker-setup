@@ -48,6 +48,9 @@ LABELSTUDIO_DATA_PATH=./data/labelstudio
 | `LABEL_STUDIO_USERNAME` | Email đăng nhập Label Studio |
 | `LABEL_STUDIO_PASSWORD` | Mật khẩu đăng nhập |
 | `LABEL_STUDIO_DOMAIN` | Domain public của Label Studio |
+| `HOST_IP` | IP LAN của máy chạy Docker (cho phép truy cập `http://<IP>:8080`) |
+| `LABELSTUDIO_PORT` | Cổng host (mặc định `8080`) |
+| `LABEL_STUDIO_HOST` | URL gốc cho link tuyệt đối — để trống để dùng được cả localhost / IP / domain |
 | `LABELSTUDIO_DATA_PATH` | Đường dẫn lưu dữ liệu (mặc định `./data/labelstudio`) |
 
 > **Lưu ý bảo mật:** Không commit file `.env` lên Git.
@@ -65,7 +68,9 @@ docker compose ps
 docker compose logs -f labelstudio
 ```
 
-Label Studio sẽ khả dụng tại `https://<LABEL_STUDIO_DOMAIN>` (qua tunnel) hoặc `http://localhost:8080` (local).
+Label Studio sẽ khả dụng tại `https://<LABEL_STUDIO_DOMAIN>` (Cloudflare Tunnel → `http://labelstudio:8080`), `http://localhost:8080` hoặc `http://<HOST_IP>:8080`.
+
+> Cookie không đặt cờ `Secure` (`SESSION_COOKIE_SECURE=0`) để đăng nhập được qua HTTP; qua domain vẫn là HTTPS.
 
 ## Thay đổi vị trí lưu dữ liệu
 

@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   portainer:
     image: portainer/portainer-ce:latest
@@ -7,8 +5,20 @@ services:
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
+    environment:
+      # Origin public dạng https://host (nhiều giá trị cách nhau bằng dấu phẩy),
+      # tránh lỗi CSRF "origin invalid" khi đi qua Cloudflare
+      - TRUSTED_ORIGINS=${PORTAINER_TRUSTED_ORIGINS:-}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ${PORTAINER_DATA_PATH:-./data}:/data
     ports:
-      - "${PORTAINER_PORT:-9000}:9000"
+      # 9002 để không trùng cổng S3 API 9000 của MinIO
+      - "${PORTAINER_PORT:-9002}:9000"
+    networks:
+      - default
+      - proxy
+
+networks:
+  proxy:
+    name: proxy_net

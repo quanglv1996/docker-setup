@@ -9,7 +9,11 @@ services:
 
     environment:
       - SECRET_KEY_BASE=${SECRET_KEY_BASE}
+      # Domain chính (dùng cho link trong email, thông báo)
       - OPENPROJECT_HOST__NAME=${OPENPROJECT_HOST_NAME:-localhost:8888}
+      # Các host khác được phép truy cập (cách nhau bằng dấu cách, không kèm cổng)
+      - OPENPROJECT_ADDITIONAL__HOST__NAMES=localhost 127.0.0.1 ${HOST_IP:-127.0.0.1}
+      # false để truy cập được bằng http://localhost / http://IP. Cloudflare vẫn phục vụ HTTPS cho domain.
       - OPENPROJECT_HTTPS=${OPENPROJECT_HTTPS:-false}
       - OPENPROJECT_SEED_DEMO_DATA=false
 
@@ -20,7 +24,10 @@ services:
 
     networks:
       - openproject-net
+      - proxy
 
 networks:
   openproject-net:
     driver: bridge
+  proxy:
+    name: proxy_net

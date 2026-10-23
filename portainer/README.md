@@ -12,7 +12,8 @@ Triển khai [Portainer CE](https://www.portainer.io/) — giao diện web quả
 
 | Biến | Mô tả | Mặc định |
 |------|--------|----------|
-| `PORTAINER_PORT` | Cổng host expose ra ngoài | `9000` |
+| `PORTAINER_PORT` | Cổng host expose ra ngoài (tránh 9000 của MinIO) | `9002` |
+| `PORTAINER_TRUSTED_ORIGINS` | Origin public dạng `https://portainer.yourdomain.com` (tránh lỗi CSRF qua Cloudflare) | — |
 | `PORTAINER_DATA_PATH` | Đường dẫn lưu data Portainer | `./data` |
 
 ### 2. Khởi động
@@ -23,7 +24,7 @@ docker compose up -d
 
 ### 3. Tạo tài khoản admin
 
-Truy cập `http://localhost:9000` (hoặc domain Cloudflare Tunnel), tạo tài khoản admin **trong vòng 5 phút** sau khi khởi động — nếu quá hạn, restart container:
+Truy cập `http://localhost:9002`, `http://<IP>:9002` (hoặc domain Cloudflare Tunnel → `http://portainer:9000`), tạo tài khoản admin **trong vòng 5 phút** sau khi khởi động — nếu quá hạn, restart container:
 
 ```bash
 docker compose restart portainer

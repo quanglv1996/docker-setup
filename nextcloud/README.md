@@ -11,7 +11,7 @@ Internet
 Cloudflare Tunnel / Reverse Proxy
    │
    ▼
-Nextcloud :8080 ──► MariaDB :3306
+Nextcloud :9090 ──► MariaDB :3306
                 └── Redis   :6379
 ```
 
@@ -42,12 +42,12 @@ Dữ liệu lưu theo đường dẫn trong `.env` (mặc định `./data/`), t�
 | `MYSQL_PASSWORD` | Mật khẩu database | *(bắt buộc đổi)* |
 | `NEXTCLOUD_ADMIN_USER` | Tài khoản admin Nextcloud | `admin` |
 | `NEXTCLOUD_ADMIN_PASSWORD` | Mật khẩu admin | *(bắt buộc đổi)* |
-| `NEXTCLOUD_TRUSTED_DOMAINS` | Danh sách domain tin cậy, cách nhau bằng dấu cách | `localhost` |
-| `OVERWRITE_PROTOCOL` | Protocol khi sau reverse proxy (`https`) | `https` |
-| `OVERWRITE_HOST` | Domain khi sau reverse proxy | — |
+| `NEXTCLOUD_TRUSTED_DOMAINS` | localhost, IP LAN, domain — cách nhau bằng dấu cách. Đồng bộ lại mỗi lần khởi động | `localhost` |
+| `OVERWRITE_PROTOCOL` | Ép protocol cho mọi URL — **để trống** để vẫn vào được bằng IP | — |
+| `OVERWRITE_HOST` | Ép host cho mọi URL — **để trống** để vẫn vào được bằng IP | — |
 | `OVERWRITE_CLI_URL` | URL đầy đủ cho CLI và cronjob | — |
 | `TRUSTED_PROXIES` | Dải IP của proxy (CIDR) | `172.16.0.0/12` |
-| `NEXTCLOUD_PORT` | Cổng host expose ra ngoài | `8080` |
+| `NEXTCLOUD_PORT` | Cổng host expose ra ngoài | `9090` |
 | `DB_DATA_PATH` | Đường dẫn lưu data MariaDB | `./data/db` |
 | `NEXTCLOUD_DATA_PATH` | Đường dẫn lưu data Nextcloud | `./data/nextcloud` |
 
@@ -68,19 +68,29 @@ docker compose ps
 docker compose logs -f nextcloud
 ```
 
-Truy cập tại `http://localhost:8080` (hoặc domain đã cấu hình).
+Truy cập tại `http://localhost:9090`, `http://<IP>:9090` hoặc domain đã cấu hình.
 
 ## Chạy sau Cloudflare Tunnel / Reverse Proxy
 
 Chỉnh `.env`:
 
 ```env
-NEXTCLOUD_TRUSTED_DOMAINS=localhost nextcloud.yourdomain.com
-OVERWRITE_PROTOCOL=https
-OVERWRITE_HOST=nextcloud.yourdomain.com
+NEXTCLOUD_TRUSTED_DOMAINS=localhost 127.0.0.1 192.168.1.100 nextcloud.yourdomain.com
+OVERWRITE_PROTOCOL=
+OVERWRITE_HOST=
 OVERWRITE_CLI_URL=https://nextcloud.yourdomain.com
 TRUSTED_PROXIES=172.16.0.0/12
 ```
+
+Cloudflare Tunnel trỏ `nextcloud.yourdomain.com` → `http://nextcloud:80`. Nextcloud tin header
+`X-Forwarded-Proto` từ `TRUSTED_PROXIES` nên tự sinh link `https://` khi đi qua domain, còn truy cập
+bằng localhost / IP vẫn giữ nguyên host đó.
+
+> Nếu `config.php` đã lưu sẵn `overwritehost` / `overwriteprotocol` (cấu hình cũ), xoá đi:
+> ```bash
+> docker exec -u www-data nextcloud php occ config:system:delete overwritehost
+> docker exec -u www-data nextcloud php occ config:system:delete overwriteprotocol
+> ```
 
 Khởi động lại:
 
@@ -90,9 +100,9 @@ docker compose down && docker compose up -d
 
 ## Thêm trusted domain sau khi đã chạy
 
-```bash
-docker exec -u www-data nextcloud php occ config:system:set trusted_domains 2 --value="newdomain.com"
-```
+Thêm vào `NEXTCLOUD_TRUSTED_DOMAINS` trong `.env` rồi `docker compose up -d`. Script
+[`hooks/before-starting/10-trusted-domains.sh`](hooks/before-starting/10-trusted-domains.sh) ghi lại danh sách này vào
+`config.php` mỗi lần container khởi động (image gốc chỉ áp dụng biến này ở lần cài đặt đầu tiên).
 
 ## Fix cảnh báo bảo mật / hiệu năng
 

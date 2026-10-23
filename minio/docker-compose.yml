@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   minio:
     # minio/minio trên Docker Hub đã bị gỡ, dùng bản build cộng đồng (Pigsty)
@@ -10,13 +8,17 @@ services:
     environment:
       - MINIO_ROOT_USER=${MINIO_ROOT_USER}
       - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
-      - MINIO_BROWSER_REDIRECT_URL=${MINIO_CONSOLE_URL}
+      # Chỉ dùng để redirect khi mở cổng API bằng trình duyệt; console vẫn truy cập được qua localhost / IP
+      - MINIO_BROWSER_REDIRECT_URL=${MINIO_CONSOLE_URL:-}
       - TZ=Asia/Ho_Chi_Minh
     volumes:
       - ${MINIO_DATA_PATH:-./data}:/data
     ports:
       - "${MINIO_API_PORT:-9000}:9000"
       - "${MINIO_CONSOLE_PORT:-9001}:9001"
+    networks:
+      - default
+      - proxy
     healthcheck:
       test: ["CMD", "mc", "ready", "local"]
       interval: 30s
@@ -24,5 +26,5 @@ services:
       retries: 3
 
 networks:
-  default:
-    name: minio_net
+  proxy:
+    name: proxy_net

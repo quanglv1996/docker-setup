@@ -12,5 +12,12 @@ services:
 
     environment:
       DOMAIN: https://${VAULTWARDEN_DOMAIN}
-      WEBSOCKET_ENABLED: ${VAULTWARDEN_WEBSOCKET_ENABLED:-true}
       SIGNUPS_ALLOWED: ${VAULTWARDEN_SIGNUPS_ALLOWED:-true}
+
+    networks:
+      - default
+      - proxy
+
+networks:
+  proxy:
+    name: proxy_net
