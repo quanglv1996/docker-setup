@@ -1,4 +1,6 @@
-version: "3.9"
+# Cùng project name với docker-compose.yml ở thư mục gốc, để chạy `docker compose`
+# trong thư mục này hay ở gốc đều quản lý cùng một bộ container (tránh trùng container_name)
+name: docker-setup
 
 services:
   mariadb:
@@ -51,12 +53,14 @@ services:
 
       # Reverse proxy
       - TRUSTED_PROXIES=${TRUSTED_PROXIES:-}
-      - OVERWRITEPROTOCOL=${OVERWRITE_PROTOCOL:-https}
+      - OVERWRITEPROTOCOL=${OVERWRITE_PROTOCOL:-}
       - OVERWRITEHOST=${OVERWRITE_HOST:-}
       - OVERWRITECLIURL=${OVERWRITE_CLI_URL:-}
 
     volumes:
       - ${NEXTCLOUD_DATA_PATH:-./data/nextcloud}:/var/www/html
+      # Đặt ServerName để tắt cảnh báo AH00558 của Apache
+      - ./apache/servername.conf:/etc/apache2/conf-enabled/servername.conf:ro
     ports:
       - "${NEXTCLOUD_PORT:-8080}:80"
     networks:

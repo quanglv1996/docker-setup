@@ -35,9 +35,24 @@ Mỗi thư mục là một stack độc lập gồm:
 
 ## Sử dụng
 
+Tạo `.env` cho từng app từ file mẫu rồi chỉnh lại giá trị:
+
+```bash
+for d in */; do [ -f "$d.env.example" ] && [ ! -f "$d.env" ] && cp "$d.env.example" "$d.env"; done
+```
+
+**Chạy toàn bộ app cùng lúc** (từ thư mục gốc, cần Docker Compose >= v2.20):
+
+```bash
+docker compose up -d
+```
+
+Danh sách app được chạy nằm trong [`docker-compose.yml`](docker-compose.yml) ở thư mục gốc — app nào không muốn chạy thì comment dòng `include` tương ứng. Mặc định không chạy `cloudflare-tunnel`, `cloudflare-ddns-wireguard`, `vaultwarden`.
+
+**Chạy riêng một app:**
+
 ```bash
 cd <service>/
-cp .env.example .env    # nếu có, hoặc chỉnh .env trực tiếp
 docker compose up -d
 ```
 

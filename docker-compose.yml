@@ -1,0 +1,17 @@
+# Chạy toàn bộ các app cùng lúc từ thư mục gốc:
+#   docker compose up -d
+#
+# Mỗi app vẫn dùng docker-compose.yml + .env trong thư mục riêng của nó
+# (đường dẫn tương đối như ./data được tính theo thư mục app).
+# App nào không muốn chạy thì comment dòng tương ứng bên dưới.
+# Yêu cầu Docker Compose >= v2.20 (hỗ trợ `include`).
+
+include:
+  - label-studio/docker-compose.yml
+  - minio/docker-compose.yml
+  - nextcloud/docker-compose.yml
+  - open-project/docker-compose.yml
+  - portainer/docker-compose.yml
+  # - cloudflare-tunnel/docker-compose.yml
+  # - cloudflare-ddns-wireguard/docker-compose.yml
+  # - vaultwarden/docker-compose.yml

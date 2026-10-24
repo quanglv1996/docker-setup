@@ -43,8 +43,8 @@ Dữ liệu lưu theo đường dẫn trong `.env` (mặc định `./data/`), t�
 | `NEXTCLOUD_ADMIN_USER` | Tài khoản admin Nextcloud | `admin` |
 | `NEXTCLOUD_ADMIN_PASSWORD` | Mật khẩu admin | *(bắt buộc đổi)* |
 | `NEXTCLOUD_TRUSTED_DOMAINS` | Danh sách domain tin cậy, cách nhau bằng dấu cách | `localhost` |
-| `OVERWRITE_PROTOCOL` | Protocol khi sau reverse proxy (`https`) | `https` |
-| `OVERWRITE_HOST` | Domain khi sau reverse proxy | — |
+| `OVERWRITE_PROTOCOL` | Ép protocol (`https`) — để trống nếu muốn vào được cả bằng IP:port | — |
+| `OVERWRITE_HOST` | Ép domain — để trống nếu muốn vào được cả bằng IP:port | — |
 | `OVERWRITE_CLI_URL` | URL đầy đủ cho CLI và cronjob | — |
 | `TRUSTED_PROXIES` | Dải IP của proxy (CIDR) | `172.16.0.0/12` |
 | `NEXTCLOUD_PORT` | Cổng host expose ra ngoài | `8080` |
@@ -68,19 +68,34 @@ docker compose ps
 docker compose logs -f nextcloud
 ```
 
-Truy cập tại `http://localhost:8080` (hoặc domain đã cấu hình).
+Truy cập tại `http://localhost:<NEXTCLOUD_PORT>` (hoặc domain đã cấu hình).
 
 ## Chạy sau Cloudflare Tunnel / Reverse Proxy
 
 Chỉnh `.env`:
 
 ```env
-NEXTCLOUD_TRUSTED_DOMAINS=localhost nextcloud.yourdomain.com
-OVERWRITE_PROTOCOL=https
-OVERWRITE_HOST=nextcloud.yourdomain.com
+NEXTCLOUD_TRUSTED_DOMAINS=localhost 192.168.1.100 nextcloud.yourdomain.com
+OVERWRITE_PROTOCOL=
+OVERWRITE_HOST=
 OVERWRITE_CLI_URL=https://nextcloud.yourdomain.com
 TRUSTED_PROXIES=172.16.0.0/12
 ```
+
+Để trống `OVERWRITE_PROTOCOL` / `OVERWRITE_HOST`: Nextcloud tự nhận `https` + domain từ header
+`X-Forwarded-*` của Cloudflare Tunnel (vì IP tunnel nằm trong `TRUSTED_PROXIES`), nên vẫn vào được
+cả qua `http://<IP>:<NEXTCLOUD_PORT>` lẫn qua domain. Nếu đặt hai biến này, mọi truy cập sẽ bị redirect về domain.
+
+Trong Cloudflare Zero Trust → Tunnel → **Public Hostname**, trỏ `nextcloud.yourdomain.com` tới
+`http://host.docker.internal:<NEXTCLOUD_PORT>` (container tunnel không chung network với Nextcloud).
+
+> Các giá trị `overwrite*` được ghi luôn vào `config/config.php` lúc cài đặt — xoá biến trong `.env`
+> là chưa đủ, cần xoá thêm trong config (sau khi container đã được tạo lại với `.env` mới):
+>
+> ```bash
+> docker exec -u www-data nextcloud php occ config:system:delete overwritehost
+> docker exec -u www-data nextcloud php occ config:system:delete overwriteprotocol
+> ```
 
 Khởi động lại:
 

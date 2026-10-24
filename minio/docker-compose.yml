@@ -1,8 +1,6 @@
-version: "3.9"
-
 services:
   minio:
-    image: minio/minio:latest
+    image: pgsty/minio:latest
     container_name: minio
     restart: unless-stopped
     command: server /data --console-address ":9001"
@@ -17,7 +15,7 @@ services:
       - "${MINIO_API_PORT:-9000}:9000"
       - "${MINIO_CONSOLE_PORT:-9001}:9001"
     healthcheck:
-      test: ["CMD", "mc", "ready", "local"]
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
       interval: 30s
       timeout: 10s
       retries: 3
